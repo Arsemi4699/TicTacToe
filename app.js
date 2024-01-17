@@ -70,6 +70,53 @@ class GameBoard {
                     return false;
         return true;
     }
+    //checks and returns winner of the game
+    CheckWin() {
+        let result = 0; // 1: COMPUTER is winner ,-1: HUMAN is winner, 0: draw
+        //row check
+        for (let i = 0; i < 3; i++) {
+            if (this.table[i][0] != EMPTY && this.table[i][0] == this.table[i][1] && this.table[i][1] == this.table[i][2]) {
+                result = (this.table[i][0] == COMPUTER) ? 1 : -1;
+                return {
+                    winner: result,
+                    type: "row",
+                    loc: i
+                }
+            }
+        }
+        //col check
+        for (let i = 0; i < 3; i++) {
+            if (this.table[0][i] != EMPTY && this.table[0][i] == this.table[1][i] && this.table[1][i] == this.table[2][i]) {
+                result = (this.table[0][i] == COMPUTER) ? 1 : -1;
+                return {
+                    winner: result,
+                    type: "col",
+                    loc: i
+                }
+            }
+        }
+        //left diagonal check
+        if (this.table[0][0] != EMPTY && this.table[0][0] == this.table[1][1] && this.table[1][1] == this.table[2][2]) {
+            result = (this.table[1][1] == COMPUTER) ? 1 : -1;
+            return {
+                winner: result,
+                type: "diag",
+                loc: 0
+            }
+        }
+        //right diagonal check
+        if (this.table[2][0] != EMPTY && this.table[2][0] == this.table[1][1] && this.table[1][1] == this.table[0][2]) {
+            result = (this.table[1][1] == COMPUTER) ? 1 : -1;
+            return {
+                winner: result,
+                type: "diag",
+                loc: 2
+            }
+        }
+        if (this.isTableFull())
+            return result;
+        return null;
+    }
 }
 
 
@@ -85,6 +132,16 @@ function getCOMPUTERTarget() {
     return [posRow, posCol];
 }
 
+function showResult(result) {
+    if (result === 0) {
+        return console.log("draw");
+    }
+    else {
+        let winner = (result.winner == 1) ? COMPUTER : HUMAN;
+        return console.log(winner + " Won!");
+    }
+}
+
 function simplePlay() {
     let humanSymb = prompt("enter symbol you want to play (X or O): ", HUMAN);
     if (humanSymb == "X" || humanSymb == "O") {
@@ -96,25 +153,36 @@ function simplePlay() {
         throw "Wrong Input!";
 
     let board = new GameBoard(null, null);
+    let result = null;
     while (!board.isTableFull()) {
-        let targetPos = [0, 0];
-        let currentTurn = board.getTurn();
-        console.log("turn: " + currentTurn);
-        if (currentTurn == HUMAN) {
-            targetPos = getHUMANTarget();
-        }
-        else {
-            targetPos = getCOMPUTERTarget();
-        }
-        try {
-            if (board.setTableAtRC(targetPos[0], targetPos[1]) == true) {
-                board.printTable();
-                board.ChangeTurn();
+        if (result == null) {
+            let targetPos = [0, 0];
+            let currentTurn = board.getTurn();
+            console.log("turn: " + currentTurn);
+            if (currentTurn == HUMAN) {
+                targetPos = getHUMANTarget();
             }
-        }
-        catch (er) {
-            if (currentTurn == HUMAN)
-                console.log(er);
+            else {
+                targetPos = getCOMPUTERTarget();
+            }
+            try {
+                if (board.setTableAtRC(targetPos[0], targetPos[1]) == true) {
+                    result = board.CheckWin();
+                    board.printTable();
+                    board.ChangeTurn();
+                    if (result != null) {
+                        showResult(result);
+                        break;
+                    }
+                }
+            }
+            catch (er) {
+                if (currentTurn == HUMAN)
+                    console.log(er);
+            }
+        } else {
+            showResult(result);
+            break;
         }
     }
 }
