@@ -62,6 +62,10 @@ class GameBoard {
     getTurn() {
         return this.turn;
     }
+    // returns table of the game
+    getTable() {
+        return this.table;
+    }
     // checks that game is over or not
     isTableFull() {
         for (let i = 0; i < 3; i++)
@@ -117,21 +121,101 @@ class GameBoard {
             return result;
         return null;
     }
+    // returns empty positions in table
+    getAvailablePosList() {
+        let availables = [];
+        for (let i = 0; i < 3; i++)
+            for (let j = 0; j < 3; j++)
+                if (this.table[i][j] == EMPTY)
+                    availables.push([i, j]);
+        return availables;
+    }
 }
+// returns a children list of input state(each state is a GameBoard)
 
-
+function sucessors(state) {
+    let children = [];
+    let currentTurn = state.getTurn();
+    let available = state.getAvailablePosList();
+    available.forEach(element => {
+        let sucessor = new GameBoard(state.getTable(), currentTurn);
+        sucessor.setTableAtRC(element[0], element[1]);
+        sucessor.ChangeTurn();
+        children.push({
+            state: sucessor,
+            action: element,
+            value: null
+        });
+    });
+    return children;
+}
+// the function used by the maximizing player (COMPUTER in this case) to determine the maximum possible score from a given game state. 
+function MaxValue(state, depth) {
+    let utility = state.CheckWin();
+    if (utility != null) {
+        if (utility == 0)
+            return utility;
+        else
+            return utility.winner;
+    }
+    let v = -Infinity;
+    let children = sucessors(state);
+    children.forEach(child => {
+        let minV = MinValue(child.state, depth + 1);
+        child.value = minV;
+        v = Math.max(v, minV);
+    });
+    if (depth == 0)
+        return [v, children];
+    else
+        return v;
+}
+// the function used by the minimizing player (HUMAN in this case) to determine the minimum possible score from a given game state.
+function MinValue(state, depth) {
+    let utility = state.CheckWin();
+    if (utility != null) {
+        if (utility == 0)
+            return utility;
+        else
+            return utility.winner;
+    }
+    let v = +Infinity;
+    let children = sucessors(state);
+    children.forEach(child => {
+        let maxV = MaxValue(child.state, depth + 1);
+        child.value = maxV;
+        v = Math.min(v, maxV);
+    });
+    if (depth == 0)
+        return [v, children];
+    else
+        return v;
+}
+// calculates MiniMax value and return best target position for maximizing player
+function MiniMax(state) {
+    let targetPos;
+    let result = MaxValue(state, 0);
+    let v = result[0];
+    let children = result[1];
+    for (let i = 0; i < children.length; i++) {
+        if (children[i].value == v) {
+            targetPos = children[i].action;
+            break;
+        }
+    }
+    return targetPos;
+}
+// returns human target position
 function getHUMANTarget() {
     let targetText = prompt("enter your target cell position (row col): ", "0 0");
     let targetPos = targetText.split(" ").map(Number);
     return targetPos;
 }
-
-function getCOMPUTERTarget() {
-    let posRow = Math.floor(Math.random() * 3);
-    let posCol = Math.floor(Math.random() * 3);
-    return [posRow, posCol];
+// returns computer target position
+function getCOMPUTERTarget(board) {
+    return MiniMax(board);
 }
-
+// show result of game (returns winner or draw)
 function showResult(result) {
     if (result === 0) {
         return console.log("draw");
@@ -141,8 +225,8 @@ function showResult(result) {
         return console.log(winner + " Won!");
     }
 }
-
-function simplePlay() {
+// gameplay handler
+function PlayTicTacToe() {
     let humanSymb = prompt("enter symbol you want to play (X or O): ", HUMAN);
     if (humanSymb == "X" || humanSymb == "O") {
         if (humanSymb != HUMAN) {
@@ -163,7 +247,7 @@ function simplePlay() {
                 targetPos = getHUMANTarget();
             }
             else {
-                targetPos = getCOMPUTERTarget();
+                targetPos = getCOMPUTERTarget(board);
             }
             try {
                 if (board.setTableAtRC(targetPos[0], targetPos[1]) == true) {
@@ -188,4 +272,4 @@ function simplePlay() {
 }
 
 //test area
-simplePlay();
+PlayTicTacToe();
