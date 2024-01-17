@@ -2,11 +2,11 @@ const prompt = require('prompt-sync')();
 var HUMAN = "X";
 var COMPUTER = "O";
 const EMPTY = "_";
+var alphabetaActivated = false;
 
 class GameBoard {
     table;
     turn;
-
     constructor(inTable, inTurn) {
         this.table = [
             [EMPTY, EMPTY, EMPTY],
@@ -132,7 +132,6 @@ class GameBoard {
     }
 }
 // returns a children list of input state(each state is a GameBoard)
-
 function sucessors(state) {
     let children = [];
     let currentTurn = state.getTurn();
@@ -150,7 +149,7 @@ function sucessors(state) {
     return children;
 }
 // the function used by the maximizing player (COMPUTER in this case) to determine the maximum possible score from a given game state. 
-function MaxValue(state, depth) {
+function MaxValue(state, depth, alpha, beta) {
     let utility = state.CheckWin();
     if (utility != null) {
         if (utility == 0)
@@ -160,18 +159,28 @@ function MaxValue(state, depth) {
     }
     let v = -Infinity;
     let children = sucessors(state);
-    children.forEach(child => {
-        let minV = MinValue(child.state, depth + 1);
+    for (let i = 0; i < children.length; i++) {
+        let child = children[i];
+        let minV = MinValue(child.state, depth + 1, alpha, beta);
         child.value = minV;
         v = Math.max(v, minV);
-    });
+        if (alphabetaActivated) {
+            if (v >= beta) {
+                if (depth == 0)
+                    return [v, children];
+                else
+                    return v;
+            }
+            alpha = Math.max(alpha, v)
+        }
+    }
     if (depth == 0)
         return [v, children];
     else
         return v;
 }
 // the function used by the minimizing player (HUMAN in this case) to determine the minimum possible score from a given game state.
-function MinValue(state, depth) {
+function MinValue(state, depth, alpha, beta) {
     let utility = state.CheckWin();
     if (utility != null) {
         if (utility == 0)
@@ -181,11 +190,21 @@ function MinValue(state, depth) {
     }
     let v = +Infinity;
     let children = sucessors(state);
-    children.forEach(child => {
-        let maxV = MaxValue(child.state, depth + 1);
+    for (let i = 0; i < children.length; i++) {
+        let child = children[i];
+        let maxV = MaxValue(child.state, depth + 1, alpha, beta);
         child.value = maxV;
         v = Math.min(v, maxV);
-    });
+        if (alphabetaActivated) {
+            if (v <= alpha) {
+                if (depth == 0)
+                    return [v, children];
+                else
+                    return v;
+            }
+            beta = Math.min(beta, v)
+        }
+    }
     if (depth == 0)
         return [v, children];
     else
@@ -194,7 +213,21 @@ function MinValue(state, depth) {
 // calculates MiniMax value and return best target position for maximizing player
 function MiniMax(state) {
     let targetPos;
-    let result = MaxValue(state, 0);
+    let result = MaxValue(state, 0, -Infinity, +Infinity);
+    let v = result[0];
+    let children = result[1];
+    for (let i = 0; i < children.length; i++) {
+        if (children[i].value == v) {
+            targetPos = children[i].action;
+            break;
+        }
+    }
+    return targetPos;
+}
+// calculates MiniMax value and return best target position for maximizing player using alphabeta pruning
+function AlphaBeta(state) {
+    let targetPos;
+    let result = MaxValue(state, 0, -Infinity, +Infinity);
     let v = result[0];
     let children = result[1];
     for (let i = 0; i < children.length; i++) {
@@ -213,7 +246,10 @@ function getHUMANTarget() {
 }
 // returns computer target position
 function getCOMPUTERTarget(board) {
-    return MiniMax(board);
+    if (alphabetaActivated)
+        return AlphaBeta(board);
+    else
+        return MiniMax(board);
 }
 // show result of game (returns winner or draw)
 function showResult(result) {
@@ -247,7 +283,13 @@ function PlayTicTacToe() {
                 targetPos = getHUMANTarget();
             }
             else {
+                CountCalls = 0;
+                CountCalls2 = 0;
+                cuts = 0;
+                let startTime = performance.now();
                 targetPos = getCOMPUTERTarget(board);
+                let endTime = performance.now();
+                console.log(endTime - startTime + "ms time to AI calculation!");
             }
             try {
                 if (board.setTableAtRC(targetPos[0], targetPos[1]) == true) {
