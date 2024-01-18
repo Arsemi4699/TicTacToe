@@ -32,10 +32,10 @@ h4,h3 {
 }
 
 .winline {
-  background-color: rgba(112, 255, 84, 0.751) !important;
+  background: radial-gradient(rgba(112, 255, 84, 0.645) 30%, rgba(112, 255, 84, 0) 70%) !important;
 }
 .lossline {
-  background-color: rgba(255, 84, 84, 0.751) !important;
+  background: radial-gradient(rgba(255, 84, 84, 0.645) 30%, rgba(255, 84, 84, 0) 70%) !important;
 }
 .table,
 .table td input,
