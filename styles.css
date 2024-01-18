@@ -23,12 +23,20 @@ h4,h3 {
 }
 
 .table td {
-  border: 2px solid black;
   margin: 0;
   width: 50px;
   height: 50px;
 }
+.table td:hover {
+  background-color: blanchedalmond;
+}
 
+.winline {
+  background-color: rgba(112, 255, 84, 0.751) !important;
+}
+.lossline {
+  background-color: rgba(255, 84, 84, 0.751) !important;
+}
 .table,
 .table td input,
 .table td {
@@ -37,6 +45,15 @@ h4,h3 {
 
 .table {
   margin: 1rem;
+}
+
+.vertical {
+  border-left: 2px solid black;
+  border-right: 2px solid black;
+}
+.horizontal {
+  border-top: 2px solid black;
+  border-bottom: 2px solid black;
 }
 
 .getNum {

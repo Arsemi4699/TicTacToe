@@ -26,14 +26,19 @@ class GameBoard {
     printTable() {
         let innerHTMLtxt = `<div></div><table class="table">`;
         let emptyClass = "";
+        let borderCass = "";
         for (let i = 0; i < 3; i++) {
             innerHTMLtxt += "<tr>";
             for (let j = 0; j < 3; j++) {
-                if (this.table[i][j] == EMPTY) {
+                if (this.table[i][j] == EMPTY)
                     emptyClass = "empty";
-                }
-                innerHTMLtxt += `<td class="cell ${emptyClass}"><span class="getNum">${this.table[i][j]}</span></td>`;
+                if (j == 1)
+                    borderCass = "vertical ";
+                if (i == 1)
+                    borderCass += "horizontal";
+                innerHTMLtxt += `<td class="cell ${emptyClass} ${borderCass}"><span class="getNum">${this.table[i][j]}</span></td>`;
                 emptyClass = "";
+                borderCass = "";
             }
             innerHTMLtxt += "</tr>";
         }
@@ -267,6 +272,28 @@ function showResult(result) {
         return setMessage("tipDraw", "Draw!");
     }
     else {
+        let line = (result.winner == 1) ? "lossline" : "winline";
+        let cells = document.querySelectorAll(".cell");
+        cells.forEach((cell, index) => {
+            let row = Math.floor(index / 3);
+            let col = index % 3;
+            if (result.type == "row") {
+                if (row == result.loc)
+                    cell.classList.add(line);
+            } else if (result.type == "col") {
+                if (col == result.loc)
+                    cell.classList.add(line);
+            } else if (result.type == "diag") {
+                if (result.loc == 0) {
+                    if (row == col)
+                        cell.classList.add(line);
+                }
+                else if (result.loc == 2) {
+                    if (row + col == 2)
+                        cell.classList.add(line);
+                }
+            }
+        });
         let winner = (result.winner == 1) ? COMPUTER : HUMAN;
         let tipClass = (result.winner == 1) ? "tipSucess" : "tipError";
         return setMessage(tipClass, winner + " Won!");
