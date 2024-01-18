@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tic Tac Toe</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <h1 class="title">Tic Tac Toe</h1>
+      <section class="inputSelector">
+        <h3>Select your symbol:</h3>
+        <input type="radio" name="humanSymb" id="humanSymbX" checked />
+        <label for="humanSymbX">X</label>
+        <br />
+        <input type="radio" name="humanSymb" id="humanSymbO" />
+        <label for="humanSymbO">O</label>
+        <br />
+      </section>
+      <section class="inputSelector">
+        <h3>Select Bot algorithm:</h3>
+        <input type="radio" name="aiAlgorithm" id="miniMax" checked />
+        <label for="miniMax">miniMax</label>
+        <br />
+        <input type="radio" name="aiAlgorithm" id="alphaBeta" />
+        <label for="alphaBeta">miniMax using alphaBeta pruning</label>
+        <br />
+      </section>
+      <section class="inputControl">
+        <h3>Game:</h3>
+        <h4 id="turnShow"></h4>
+        <div id="inputControl"></div>
+        <div class="runAtip">
+          <div id="runBox">
+            <button class="run" id="initGame">initialize Game</button>
+          </div>
+          <div class="hideSolveBtn" id="retry">
+            <button id="try">try again</button>
+          </div>
+          <span id="tip"></span>
+        </div>
+      </section>
+    </div>
+    <script src="./app.js"></script>
+  </body>
+</html>

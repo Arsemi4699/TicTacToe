@@ -1,8 +1,6 @@
-const prompt = require('prompt-sync')();
 var HUMAN = "X";
 var COMPUTER = "O";
 const EMPTY = "_";
-var alphabetaActivated = false;
 
 class GameBoard {
     table;
@@ -26,16 +24,21 @@ class GameBoard {
     }
     // printing game table
     printTable() {
-        let outputText = "";
+        let innerHTMLtxt = `<div></div><table class="table">`;
+        let emptyClass = "";
         for (let i = 0; i < 3; i++) {
+            innerHTMLtxt += "<tr>";
             for (let j = 0; j < 3; j++) {
-                outputText += this.table[i][j];
-                if (j < 2)
-                    outputText += " ";
+                if (this.table[i][j] == EMPTY) {
+                    emptyClass = "empty";
+                }
+                innerHTMLtxt += `<td class="cell ${emptyClass}"><span class="getNum">${this.table[i][j]}</span></td>`;
+                emptyClass = "";
             }
-            outputText += "\n"
+            innerHTMLtxt += "</tr>";
         }
-        console.log(outputText);
+        innerHTMLtxt += "</table></div>";
+        InputControl.innerHTML = innerHTMLtxt;
     }
     // set game table with player symbol in index r,c
     setTableAtRC(r, c) {
@@ -240,9 +243,16 @@ function AlphaBeta(state) {
 }
 // returns human target position
 function getHUMANTarget() {
-    let targetText = prompt("enter your target cell position (row col): ", "0 0");
-    let targetPos = targetText.split(" ").map(Number);
-    return targetPos;
+    return new Promise(resolve => {
+        let cells = document.querySelectorAll(".cell");
+        // Add a click event listener to each cell
+        cells.forEach((cell, index) => {
+            cell.addEventListener("click", function () {
+                // Resolve the promise with the clicked cell's position
+                resolve([Math.floor(index / 3), index % 3]);
+            });
+        });
+    });
 }
 // returns computer target position
 function getCOMPUTERTarget(board) {
@@ -254,42 +264,39 @@ function getCOMPUTERTarget(board) {
 // show result of game (returns winner or draw)
 function showResult(result) {
     if (result === 0) {
-        return console.log("draw");
+        return setMessage("tipDraw", "Draw!");
     }
     else {
         let winner = (result.winner == 1) ? COMPUTER : HUMAN;
-        return console.log(winner + " Won!");
+        let tipClass = (result.winner == 1) ? "tipSucess" : "tipError";
+        return setMessage(tipClass, winner + " Won!");
     }
 }
 // gameplay handler
-function PlayTicTacToe() {
-    let humanSymb = prompt("enter symbol you want to play (X or O): ", HUMAN);
+async function PlayTicTacToe() {
     if (humanSymb == "X" || humanSymb == "O") {
         if (humanSymb != HUMAN) {
             COMPUTER = HUMAN;
             HUMAN = humanSymb;
         }
-    } else
-        throw "Wrong Input!";
-
+    }
     let board = new GameBoard(null, null);
+    board.printTable();
     let result = null;
     while (!board.isTableFull()) {
         if (result == null) {
             let targetPos = [0, 0];
             let currentTurn = board.getTurn();
-            console.log("turn: " + currentTurn);
+            CtrlTurnShow(currentTurn);
             if (currentTurn == HUMAN) {
-                targetPos = getHUMANTarget();
+                targetPos = await getHUMANTarget();
             }
             else {
-                CountCalls = 0;
-                CountCalls2 = 0;
-                cuts = 0;
                 let startTime = performance.now();
                 targetPos = getCOMPUTERTarget(board);
                 let endTime = performance.now();
-                console.log(endTime - startTime + "ms time to AI calculation!");
+                let duration = (endTime - startTime).toFixed(2)
+                setMessage("tipWait", duration + "ms");
             }
             try {
                 if (board.setTableAtRC(targetPos[0], targetPos[1]) == true) {
@@ -304,14 +311,117 @@ function PlayTicTacToe() {
             }
             catch (er) {
                 if (currentTurn == HUMAN)
-                    console.log(er);
+                    setMessage("tipError", er);
             }
         } else {
             showResult(result);
             break;
         }
     }
+    CtrlretryBtn(1);
+}
+// shows result or related info
+function setMessage(className, info) {
+    if (className)
+        tipbox.classList = [className];
+    else
+        tipbox.classList = [];
+    tipbox.innerHTML = info;
+}
+// contols initialize Game button
+function CtrlRunBox(show) {
+    if (show) {
+        if (runBox.classList.contains("hideSolveBtn"))
+            runBox.classList.remove("hideSolveBtn");
+    } else {
+        if (!runBox.classList.contains("hideSolveBtn"))
+            runBox.classList.add("hideSolveBtn");
+    }
+}
+// contols retry Game button
+function CtrlretryBtn(show) {
+    if (show) {
+        if (retryBtn.classList.contains("hideSolveBtn"))
+            retryBtn.classList.remove("hideSolveBtn");
+    } else {
+        if (!retryBtn.classList.contains("hideSolveBtn"))
+            retryBtn.classList.add("hideSolveBtn");
+    }
+}
+// contols Gameplay option radio buttons
+function CtrlGamePlayOptions(show) {
+    if (!show) {
+        XInputRadio.disabled = true;
+        OInputRadio.disabled = true;
+        miniMaxInputRadio.disabled = true;
+        alphaBetaInputRadio.disabled = true;
+    }
+    else {
+        XInputRadio.disabled = false;
+        OInputRadio.disabled = false;
+        miniMaxInputRadio.disabled = false;
+        alphaBetaInputRadio.disabled = false;
+        InputControl.innerHTML = "";
+    }
+}
+// shows player turn
+function CtrlTurnShow(turn) {
+    if (turn)
+        turnShowText.innerHTML = "turn: " + turn;
+    else
+        turnShowText.innerHTML = "";
 }
 
-//test area
-PlayTicTacToe();
+var humanSymb = HUMAN;
+var alphabetaActivated = false;
+const XInputRadio = document.getElementById("humanSymbX");
+const OInputRadio = document.getElementById("humanSymbO");
+const miniMaxInputRadio = document.getElementById("miniMax");
+const alphaBetaInputRadio = document.getElementById("alphaBeta");
+const InputControl = document.getElementById("inputControl");
+
+const initGame = document.getElementById("initGame");
+const retryBtn = document.getElementById("retry");
+const runBox = document.getElementById("runBox");
+const tipbox = document.getElementById("tip");
+const turnShowText = document.getElementById("turnShow");
+
+XInputRadio.addEventListener("click", () => {
+    humanSymb = "X";
+    CtrlretryBtn(0);
+    setMessage("", "");
+    CtrlRunBox(1);
+});
+OInputRadio.addEventListener("click", () => {
+    humanSymb = "O";
+    CtrlretryBtn(0);
+    setMessage("", "");
+    CtrlRunBox(1);
+});
+miniMaxInputRadio.addEventListener("click", () => {
+    alphabetaActivated = false;
+    CtrlretryBtn(0);
+    setMessage("", "");
+    CtrlRunBox(1);
+});
+alphaBetaInputRadio.addEventListener("click", () => {
+    alphabetaActivated = true;
+    CtrlretryBtn(0);
+    setMessage("", "");
+    CtrlRunBox(1);
+});
+retryBtn.addEventListener("click", () => {
+    CtrlretryBtn(0);
+    CtrlGamePlayOptions(1);
+    CtrlTurnShow("");
+    setMessage("", "");
+    CtrlRunBox(1);
+});
+initGame.addEventListener("click", () => {
+    CtrlretryBtn(0);
+    CtrlGamePlayOptions(0);
+    CtrlTurnShow("");
+    setMessage("", "");
+    CtrlRunBox(0);
+    PlayTicTacToe();
+});
